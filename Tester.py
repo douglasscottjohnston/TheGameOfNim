@@ -1,7 +1,7 @@
 import sys
 
 from Board import Board, SquareIcon, Move
-from Solver import solve
+from Solver import Solver
 
 players = {1: SquareIcon.OMOVE, 2: SquareIcon.XMOVE}
 
@@ -16,13 +16,15 @@ def main():
     board = Board(rows, columns, ai_move)
     human_move = ai_move.opposite()
     current_move = players[1]
+    game_tree = {}
     print(board)
+    solver = Solver(4)
 
     while board.empty_squares > 0:
         if board.is_ai_turn(current_move):
-            move = solve(board, ai_move, search_method)
-            board = board.object_move(move)
+            board = solver.solve(board, ai_move, search_method)
             print(board)
+            move = board.previous_move
             print(f"{ai_move} makes a move: {move.row}/{move.column}")
         else:
             move = input("Enter your move(row,column): ").split(",")

@@ -12,16 +12,15 @@ class Board:
         self.empty_squares = rows * columns
         self.previous_move = None
         self._score = 0
+        self.depth = 0
         self._ai_move = ai_move
         self._state = [[Square(SquareIcon.EMPTY)] * self._columns for _ in range(self._rows)]
-        self._row_labels = [f"{i}" for i in range(self._rows)]
-        self._column_labels = [f"{i}" for i in range(self._columns)]
 
     def __getitem__(self, row):
         return self._state[row]
 
     def __str__(self):
-        return str(DataFrame(np.matrix(self._state), index=self._row_labels, columns=self._column_labels))
+        return str(DataFrame(np.matrix(self._state)))
 
     def __lt__(self, other):
         return self.get_score() < other.get_score()
@@ -34,6 +33,9 @@ class Board:
 
     def __ge__(self, other):
         return self.get_score() >= other.get_score()
+
+    def __hash__(self):
+        return hash(str(self))
 
     def get_surrounding_squares(self, icon, row, column):
         squares = [
@@ -56,7 +58,7 @@ class Board:
             for j in range(self._columns):
                 move = self._move(icon, i, j)
                 if move:
-                    possible_moves.append(move.previous_move)
+                    possible_moves.append(move)
         return possible_moves
 
     def can_make_move(self):
@@ -110,7 +112,7 @@ class Board:
         return icon == self._ai_move
 
     def is_full(self):
-        return self.empty_squares == 0
+        return self.empty_squares <= 0
 
 
 class Move:
