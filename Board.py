@@ -6,52 +6,81 @@ from pandas import DataFrame
 
 
 class Board:
-    def __init__(self, rows, columns):
+    def __init__(self, rows, columns, ai_move):
         self._rows = rows
         self._columns = columns
+        self.empty_squares = rows * columns
+        self.previous_move = None
+        self._score = 0
+        self._ai_move = ai_move
         self._state = [[Square(SquareIcon.EMPTY)] * self._columns for _ in range(self._rows)]
         self._row_labels = [f"{i}" for i in range(self._rows)]
         self._column_labels = [f"{i}" for i in range(self._columns)]
 
+    def __getitem__(self, row):
+        return self._state[row]
+
     def __str__(self):
         return str(DataFrame(np.matrix(self._state), index=self._row_labels, columns=self._column_labels))
 
-    def get_surrounding_squares(self, row, column):
-        squares = {
-            "top_left": Move(row - 1, column - 1),
-            "top": Move(row - 1, column),
-            "top_right": Move(row - 1, column + 1),
-            "middle_left": Move(row, column - 1),
-            "middle_right": Move(row, column + 1),
-            "bottom_left": Move(row + 1, column - 1),
-            "bottom_middle": Move(row + 1, column),
-            "bottom_right": Move(row + 1, column + 1),
-        }
+    def __lt__(self, other):
+        return self.get_score() < other.get_score()
 
-        for item in squares.items():
-            if item[1].row < 0 or item[1].column < 0 or item[1].row >= self._rows or item[1].column >= self._columns:
-                squares[item[0]] = False
+    def __le__(self, other):
+        return self.get_score() <= other.get_score()
 
-        return squares
+    def __gt__(self, other):
+        return self.get_score() > other.get_score()
 
-    def get_possible_moves(self):
+    def __ge__(self, other):
+        return self.get_score() >= other.get_score()
+
+    def get_surrounding_squares(self, icon, row, column):
+        squares = [
+            Move(icon, row - 1, column - 1) if row > 0 and column > 0 else None,  # top_left
+            Move(icon, row - 1, column) if row > 0 else None,  # top
+            Move(icon, row - 1, column + 1) if row > 0 and column < self._columns - 1 else None,  # top_right
+            Move(icon, row, column - 1) if column > 0 else None,  # middle_left
+            Move(icon, row, column + 1) if column < self._columns - 1 else None,  # middle_right
+            Move(icon, row + 1, column - 1) if row < self._rows - 1 and column > 0 else None,  # bottom_left
+            Move(icon, row + 1, column) if row < self._rows - 1 else None,  # bottom_middle
+            Move(icon, row + 1, column + 1) if row < self._rows - 1 and
+                                               column < self._columns - 1 else None,  # bottom_right
+        ]
+
+        return [square for square in squares if square is not None]
+
+    def get_possible_moves(self, icon):
         possible_moves = []
         for i in range(self._rows):
             for j in range(self._columns):
-                if self[i][j].is_empty():
-                    possible_moves.append(Move(i, j))
+                move = self._move(icon, i, j)
+                if move:
+                    possible_moves.append(move.previous_move)
         return possible_moves
 
+    def can_make_move(self):
+        return self.empty_squares > 0
+
     def _move(self, icon, row, column):
-        if self[row][column].is_empty():
+        if self[row][column].is_empty() and self.empty_squares > 0:
             move = copy.deepcopy(self)
+            move.previous_move = Move(icon, row, column)
             move[row][column] = Square(icon)
-            for square in move.get_surrounding_squares(row, column).items():
-                move[square.row][square.column] = Square(SquareIcon.BLOCKED)
+            move.empty_squares -= 1
+            for square in move.get_surrounding_squares(icon, row, column):
+                if square and move[square.row][square.column].is_empty():
+                    move[square.row][square.column] = Square(SquareIcon.BLOCKED)
+                    move.empty_squares -= 1
             return move
         else:
-            print(f"invalid move: row: {row}, column: {column}")
             return False
+
+    def move(self, icon, row, column):
+        return self._move(icon, row, column)
+
+    def object_move(self, move):
+        return self.move(move.icon, move.row, move.column)
 
     def x_move(self, row, column):
         return self._move(SquareIcon.XMOVE, row, column)
@@ -71,14 +100,24 @@ class Board:
     def get_columns(self):
         return self._columns
 
-    def __getitem__(self, row):
-        return self._state[row]
+    def get_score(self):
+        return self._score
+
+    def set_score(self, score):
+        self._score = score
+
+    def is_ai_turn(self, icon):
+        return icon == self._ai_move
+
+    def is_full(self):
+        return self.empty_squares == 0
 
 
 class Move:
-    def __init__(self, row, column):
+    def __init__(self, icon, row, column):
         self.row = row
         self.column = column
+        self.icon = icon
 
 
 class Square:
@@ -103,3 +142,12 @@ class SquareIcon(Enum):
     BLOCKED = "/"
     XMOVE = "X"
     OMOVE = "O"
+
+    def __str__(self):
+        return str(self.value)
+
+    def opposite(self):
+        return self.XMOVE if self == self.OMOVE else self.OMOVE
+
+    def is_maximizing(self):
+        return self == self.OMOVE
