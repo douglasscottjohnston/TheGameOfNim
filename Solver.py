@@ -25,9 +25,10 @@ class Solver:
             search_method = self._alpha_beta
         else:
             print(f"{search_method} is not a known search method")
-        if board not in self.game_tree:
-            self.game_tree = self._get_game_tree(board, player)
+        print(board in self.game_tree)
+        if not (board in self.game_tree):
             print("creating new game tree")
+            self.game_tree = self._get_game_tree(board, player)
         return self._mini_max(board, player)
 
     def _get_game_tree(self, board, player):
@@ -45,7 +46,8 @@ class Solver:
                 depth = vertex.depth
             for move in vertex.get_possible_moves(player):
                 move.depth = depth + 1
-                if game_tree[vertex]:
+                q.put(move)
+                if vertex in game_tree:
                     game_tree[vertex].append(move)
                 else:
                     game_tree[vertex] = [move]

@@ -18,10 +18,11 @@ def main():
     current_move = players[1]
     game_tree = {}
     print(board)
-    solver = Solver(4)
+    solver = Solver(3)
 
     while board.empty_squares > 0:
         if board.is_ai_turn(current_move):
+            print(board.empty_squares)
             board = solver.solve(board, ai_move, search_method)
             print(board)
             move = board.previous_move
