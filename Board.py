@@ -6,10 +6,16 @@ from pandas import DataFrame
 
 
 class Board:
+
     def __init__(self, rows, columns, ai_move):
+        """
+        The board Class that can generate moves
+        :param rows: The number of rows in the board
+        :param columns: The number of columns in the board
+        :param ai_move: The AI's move icon
+        """
         self._rows = rows
         self._columns = columns
-        self.empty_squares = rows * columns
         self.previous_move = None
         self._score = 0
         self.depth = 0
@@ -44,6 +50,13 @@ class Board:
         return hash(str(self))
 
     def get_surrounding_squares(self, icon, row, column):
+        """
+        Gets an array of moves of all the surrounding squares of the passed index
+        :param icon: The icon to pass to the Move constructor
+        :param row: The row of the index to search from
+        :param column: The column of the index to search from
+        :return:
+        """
         squares = [
             Move(icon, row - 1, column - 1) if row > 0 and column > 0 else None,  # top_left
             Move(icon, row - 1, column) if row > 0 else None,  # top
@@ -59,6 +72,11 @@ class Board:
         return [square for square in squares if square is not None]
 
     def get_possible_moves(self, icon):
+        """
+        Returns an array of all possible moves that can be made from the current board
+        :param icon: The icon to move with
+        :return: An array of all possible moves that can be made from the current board
+        """
         possible_moves = []
         for i in range(self._rows):
             for j in range(self._columns):
@@ -67,27 +85,34 @@ class Board:
                     possible_moves.append(move)
         return possible_moves
 
-    def can_make_move(self):
-        return self.empty_squares > 0
-
     def _move(self, icon, row, column):
-        if self[row][column].is_empty() and self.empty_squares > 0:
+        if self[row][column].is_empty() and not self.is_full():
             move = copy.deepcopy(self)
             move.previous_move = Move(icon, row, column)
             move[row][column] = Square(icon)
-            move.empty_squares -= 1
             for square in move.get_surrounding_squares(icon, row, column):
                 if square and move[square.row][square.column].is_empty():
                     move[square.row][square.column] = Square(SquareIcon.BLOCKED)
-                    move.empty_squares -= 1
             return move
         else:
             return False
 
     def move(self, icon, row, column):
+        """
+        Handles player movement
+        :param icon: The SquareIcon to preform the move
+        :param row: The row of the move
+        :param column: The column of the move
+        :return: If the move is possible it returns a deep copy of the board with the move made or false otherwise
+        """
         return self._move(icon, row, column)
 
     def object_move(self, move):
+        """
+        Preform a move using the Move object
+        :param move: The move object
+        :return: If the move is possible it returns a deep copy of the board with the move made or false otherwise
+        """
         return self.move(move.icon, move.row, move.column)
 
     def x_move(self, row, column):
@@ -117,12 +142,32 @@ class Board:
     def is_ai_turn(self, icon):
         return icon == self._ai_move
 
+    def get_ai_move(self):
+        return self._ai_move
+
     def is_full(self):
-        return self.empty_squares <= 0
+        for i in range(0, self._rows):
+            for j in range(0, self._columns):
+                if self[i][j].is_empty():
+                    return False
+        return True
 
 
 class Move:
     def __init__(self, icon, row, column):
+        """
+        The move object
+        :param icon: The icon for the move
+        :param row: The row of the move
+        :param column: The column of the move
+        """
+        self.valid = True
+        if row < 0:
+            print("row must be positive")
+            self.valid = False
+        if column < 0:
+            print("column must be positive")
+            self.valid = False
         self.row = row
         self.column = column
         self.icon = icon
@@ -130,6 +175,10 @@ class Move:
 
 class Square:
     def __init__(self, icon):
+        """
+        The square object that represents a square in the board
+        :param icon: The icon to store in the square
+        """
         self.icon = icon
 
     def __repr__(self):
@@ -146,6 +195,9 @@ class Square:
 
 
 class SquareIcon(Enum):
+    """
+    Enum used to represent icons in squares
+    """
     EMPTY = "-"
     BLOCKED = "/"
     XMOVE = "X"
