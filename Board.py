@@ -145,6 +145,14 @@ class Board:
     def get_ai_move(self):
         return self._ai_move
 
+    def get_num_empty_squares(self):
+        empty_squares = 0
+        for i in range(0, self._rows):
+            for j in range(0, self._columns):
+                if self[i][j].is_empty():
+                    empty_squares += 1
+        return empty_squares
+
     def is_full(self):
         for i in range(0, self._rows):
             for j in range(0, self._columns):

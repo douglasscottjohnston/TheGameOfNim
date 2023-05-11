@@ -3,7 +3,13 @@ import queue
 from Board import Board, SquareIcon, Move
 
 
-# TODO: Implement evaluation function
+def _is_odd(number):
+    return number % 2 == 1
+
+
+def _is_even(number):
+    return number % 2 == 0
+
 
 class Solver:
     def __init__(self, depth_limit):
@@ -29,6 +35,7 @@ class Solver:
         if board not in self.game_tree or not self.game_tree[board]:  # Need to make a new game tree
             print("creating new game tree")
             self.game_tree = self._generate_game_tree(board, player)
+        print("searching game tree")
         move = search_method(board, player)  # search the game tree
         return move
 
@@ -43,7 +50,7 @@ class Solver:
         depth = 0
         root.depth = 0
         root.previous_move = None
-        q = queue.LifoQueue()
+        q = queue.Queue()
         q.put(root)
 
         while not q.empty():
@@ -96,4 +103,16 @@ class Solver:
         print(root)
 
     def evaluate(self, board, is_maximizing):
-        return 0.99 if is_maximizing else -0.99
+        move = board.previous_move
+        squares_blocked = len(board.get_surrounding_squares(move.icon, move.row,
+                                                            move.column)) + 1  # surrounding squares + the square the O or X is placed in
+        empty_squares = board.get_num_empty_squares()
+
+        if _is_odd(squares_blocked) and _is_odd(empty_squares):
+            return -(squares_blocked / 10) if is_maximizing else squares_blocked / 10
+        if _is_odd(squares_blocked) and _is_even(empty_squares):
+            return squares_blocked / 10 if is_maximizing else -(squares_blocked / 10)
+        if _is_even(squares_blocked) and _is_odd(empty_squares):
+            return squares_blocked / 10 if is_maximizing else -(squares_blocked / 10)
+        if _is_even(squares_blocked) and _is_even(empty_squares):
+            return -(squares_blocked / 10) if is_maximizing else squares_blocked / 10

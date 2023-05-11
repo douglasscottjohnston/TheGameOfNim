@@ -11,11 +11,11 @@ GAME_TREE_DEPTH = 3
 
 def append_to_readme(board, solver, search_method):
     file = open("readme.txt", "a")
-    file.write(f"*** {board.get_rows} x {board.get_columns()} Board ***\n\n")
+    file.write(f"*** {board.get_rows()} x {board.get_columns()} Board ***\n\n")
     file.write(f"AI is player {move_to_players[board.get_ai_move()]}:\n")
     file.write(search_method_strings[search_method] + "\n")
     file.write(f"Nodes expanded: {solver.nodes_expanded}\n")
-    file.write(f"Depth level {GAME_TREE_DEPTH}")
+    file.write(f"Depth level {GAME_TREE_DEPTH}\n\n")
 
 
 def main():
