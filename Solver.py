@@ -93,7 +93,41 @@ class Solver:
         :param current_move: The current player (X or O)
         :return: A board that represents the best next move to make
         """
+        return self._alpha_beta_helper(root, current_player, -math.inf, math.inf)
+
         print(root)
+
+    def _alpha_beta_helper(self, root: Board, current_player, alpha, beta):
+        if root.is_full():  # is terminal node
+            root.set_score(-1) if current_player.is_maximizing() else root.set_score(1)
+            return root
+
+        if root not in self.game_tree or not self.game_tree[root]:  # is leaf node
+            root.set_score(self.evaluate(root, current_player.is_maximizing()))
+            return root
+
+        if current_player.is_maximizing():  # max level in game tree
+            root.set_score(-math.inf)
+            for child in self.game_tree[root]:
+                self.nodes_expanded += 1
+                root.set_score(
+                    max(value, self._alpha_beta_helper(child, current_player.opposite(), alpha, beta))
+                )
+                if root.get_score() > beta:
+                    break
+                alpha = max(alpha, root.get_score())
+            return root
+        else:  # min level in game tree
+            root.set_score(math.inf)
+            for child in self.game_tree[root]:
+                self.nodes_expanded += 1
+                root.set_score(
+                    min(value, self._alpha_beta_helper(child, current_player.opposite(), alpha, beta))
+                )
+                if root.get_score() < alpha:
+                    break
+                beta = min(beta, root.get_score())
+            return root
 
     def evaluate(self, board, is_maximizing):
         return 0.99 if is_maximizing else -0.99
