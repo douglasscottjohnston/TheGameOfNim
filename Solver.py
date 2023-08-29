@@ -1,4 +1,5 @@
 import queue
+import math
 
 from Board import Board, SquareIcon, Move
 
@@ -87,7 +88,7 @@ class Solver:
             return root
 
         scores = []
-        for next_move in self.game_tree[root]:
+        for next_move in self.game_tree[root]:  # search all child nodes
             next_move.set_score(self._mini_max(next_move, current_player.opposite()).get_score())
             scores.append(next_move)
 
@@ -115,31 +116,38 @@ class Solver:
 
         if current_player.is_maximizing():  # max level in game tree
             root.set_score(-math.inf)
+            scores = []
             for child in self.game_tree[root]:
                 self.nodes_expanded += 1
-                root.set_score(
-                    max(value, self._alpha_beta_helper(child, current_player.opposite(), alpha, beta))
-                )
-                if root.get_score() > beta:
+                child.set_score(self._alpha_beta_helper(child, current_player.opposite(), alpha, beta).get_score())
+                if (root.get_score()) > beta:  # alpha > beta so prune the other nodes
                     break
                 alpha = max(alpha, root.get_score())
-            return root
+                scores.append(child)
+            return max(scores)
         else:  # min level in game tree
             root.set_score(math.inf)
+            scores = []
             for child in self.game_tree[root]:
                 self.nodes_expanded += 1
-                root.set_score(
-                    min(value, self._alpha_beta_helper(child, current_player.opposite(), alpha, beta))
-                )
-                if root.get_score() < alpha:
+                child.set_score(self._alpha_beta_helper(child, current_player.opposite(), alpha, beta).get_score())
+                if root.get_score() < alpha:  # beta < alpha so prune the other nodes
                     break
                 beta = min(beta, root.get_score())
-            return root
+                scores.append(child)
+            return min(scores)
 
     def evaluate(self, board, is_maximizing):
+        """
+        Evaluates a board object by looking at if the number of squares blocked and the number of empty squares left over are either
+        even or odd. This is based upon the strategy to solve nim from Kozma.
+        :param board: The board object to evaluate
+        :param is_maximizing: True if the player is maximizing (O) and false otherwise (X)
+        :return: A decimal value representing the score of the board
+        """
         move = board.previous_move
-        squares_blocked = len(board.get_surrounding_squares(move.icon, move.row,
-                                                            move.column)) + 1  # surrounding squares + the square the O or X is placed in
+        # squares_blocked = number of surrounding squares + the square the O or X is placed in
+        squares_blocked = len(board.get_surrounding_squares(move.icon, move.row, move.column)) + 1
         empty_squares = board.get_num_empty_squares()
 
         if _is_odd(squares_blocked) and _is_odd(empty_squares):

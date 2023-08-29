@@ -40,9 +40,9 @@ def main():
             board = solver.solve(board, ai_move, search_method)
             print(board)
             move = board.previous_move
-            print(f"{ai_move} makes a move: {move.row}/{move.column}")
+            print(f"{move_to_players[ai_move]} makes a move: {move.row}/{move.column}")
         else:  # handles human moves
-            move = input("Enter your move(row,column): ").split(",")
+            move = input("Enter your move(row/column): ").split("/")
             # input validation
             if int(move[0]) >= board.get_rows():
                 print(f"row must be between 0 and {board.get_rows() - 1}")
@@ -57,7 +57,7 @@ def main():
             if new_board:  # the move was possible!
                 board = new_board
                 print(board)
-                print(f"{human_move} makes a move: {move.row}/{move.column}")
+                print(f"{move_to_players[human_move]} makes a move: {move.row}/{move.column}")
             else:  # that move isn't possible :(
                 print(f"invalid move: {move.row}, {move.column}\n")
                 continue
